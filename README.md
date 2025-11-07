@@ -3,12 +3,26 @@
 Read any Terraform module and wraps all its parameters into an object variable and also generates
 a passthrough module source.
 
+## Usage
+
+```sh
+$ tfmodulewrap 
+  -add-defaults
+        Add default values
+  -ignore-vars string
+        Variables to ignore
+  -module-path string
+        Path containing the module
+  -module-var string
+        Variable for the module configuration
+```
+
 ## Example
 
 Using it on [Cloud Foundation Fabric](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric)'s [`net-address`](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/blob/master/modules/net-address) module:
 
 ```sh
-# tfmodulewrap modules/net-address
+$ tfmodulewrap modules/net-address
 ````
 
 Result:
@@ -86,24 +100,7 @@ variable "net_address" {
       name        = optional(string)
     }))
   })
-  default = {
-    internal_addresses = {
-    }
-    ipsec_interconnect_addresses = {
-    }
-    network_attachments = {
-    }
-    psa_addresses = {
-    }
-    psc_addresses = {
-    }
-    external_addresses = {
-    }
-    global_addresses = {
-    }
-  }
 }
-
 
 module "net_address" {
   source = "./modules/net-address"

@@ -5,6 +5,7 @@ package tfmodulewrap
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/hashicorp/hcl/v2/hclwrite"
@@ -61,7 +62,7 @@ func printTfValue(v interface{}) string {
 	return val
 }
 
-func LoadModule(modulePath string, moduleVar string, ignoreVars []string) error {
+func LoadModule(modulePath string, moduleVar string, ignoreVars []string, addDefaultValues bool) error {
 	module, _ := tfconfig.LoadModule(modulePath)
 
 	output := ""
@@ -71,30 +72,36 @@ func LoadModule(modulePath string, moduleVar string, ignoreVars []string) error 
 	// Construct object definition
 	output += fmt.Sprintf("  type = object({\n")
 	for _, v := range module.Variables {
-		// fmt.Printf("|| %+v ||\n", v)
-		varType := v.Type
-		if v.Required {
-			varType = fmt.Sprintf("optional(%s)", varType)
+		if !slices.Contains(ignoreVars, v.Name) {
+			varType := v.Type
+			if v.Required {
+				varType = fmt.Sprintf("optional(%s)", varType)
+			}
+			if v.Sensitive {
+				varType = fmt.Sprintf("sensitive(%s)", varType)
+			}
+			if v.Description != "" {
+				output += fmt.Sprintf("    # %s\n", v.Description)
+			}
+			output += fmt.Sprintf("    %s = %s", v.Name, v.Type)
+			output += fmt.Sprintf("\n")
 		}
-		if v.Sensitive {
-			varType = fmt.Sprintf("sensitive(%s)", varType)
-		}
-		if v.Description != "" {
-			output += fmt.Sprintf("    # %s\n", v.Description)
-		}
-		output += fmt.Sprintf("    %s = %s", v.Name, v.Type)
-		output += fmt.Sprintf("\n")
 	}
 	output += fmt.Sprintf("  })\n")
 
 	// Add default values
-	output += "  default = {\n"
-	for _, v := range module.Variables {
-		if v.Default != nil {
-			output += fmt.Sprintf("    %s = %s\n", v.Name, printTfValue(v.Default))
+	if addDefaultValues {
+		output += "  default = {\n"
+		for _, v := range module.Variables {
+			if !slices.Contains(ignoreVars, v.Name) {
+				if v.Default != nil {
+					output += fmt.Sprintf("    %s = %s\n", v.Name, printTfValue(v.Default))
+
+				}
+			}
 		}
+		output += "  }\n"
 	}
-	output += "  }\n"
 
 	if module.Diagnostics.HasErrors() {
 		return diagnosticsToError(&module.Diagnostics)
@@ -111,7 +118,9 @@ func LoadModule(modulePath string, moduleVar string, ignoreVars []string) error 
 		output += fmt.Sprintf("  source = \"%s\"\n\n", modulePath)
 	}
 	for _, v := range module.Variables {
-		output += fmt.Sprintf("  %s = var.%s.%s\n", v.Name, moduleVar, v.Name)
+		if !slices.Contains(ignoreVars, v.Name) {
+			output += fmt.Sprintf("  %s = var.%s.%s\n", v.Name, moduleVar, v.Name)
+		}
 	}
 	output += "}\n"
 

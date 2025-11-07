@@ -1,3 +1,5 @@
+// © Copyright 2025 Taneli Leppä
+// SPDX-License-Identifier: Apache-2.0
 package main
 
 import (
@@ -12,10 +14,12 @@ func main() {
 	var modulePath string
 	var moduleVar string
 	var ignoreVars string
+	var addDefaultValues bool
 
 	flag.StringVar(&modulePath, "module-path", "", "Path containing the module")
 	flag.StringVar(&modulePath, "module-var", "", "Variable for the module configuration")
 	flag.StringVar(&ignoreVars, "ignore-vars", "", "Variables to ignore")
+	flag.BoolVar(&addDefaultValues, "add-defaults", false, "Add default values")
 	flag.Parse()
 
 	ignoreVarsList := make([]string, 0)
@@ -34,7 +38,7 @@ func main() {
 		moduleVar = baseName
 	}
 
-	err := tfmodulewrap.LoadModule(modulePath, moduleVar, ignoreVarsList)
+	err := tfmodulewrap.LoadModule(modulePath, moduleVar, ignoreVarsList, addDefaultValues)
 	if err != nil {
 		panic(err)
 	}
