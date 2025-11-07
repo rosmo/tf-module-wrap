@@ -22,7 +22,7 @@ $ tfmodulewrap
 Using it on [Cloud Foundation Fabric](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric)'s [`net-address`](https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/blob/master/modules/net-address) module:
 
 ```sh
-$ tfmodulewrap modules/net-address
+$ tfmodulewrap modules/net-address -add-defaults=true
 ````
 
 Result:
@@ -102,16 +102,17 @@ variable "net_address" {
   })
 }
 
+
 module "net_address" {
   source = "./modules/net-address"
 
-  global_addresses             = var.net_address.global_addresses
-  internal_addresses           = var.net_address.internal_addresses
   ipsec_interconnect_addresses = var.net_address.ipsec_interconnect_addresses
   network_attachments          = var.net_address.network_attachments
   project_id                   = var.net_address.project_id
   psa_addresses                = var.net_address.psa_addresses
   psc_addresses                = var.net_address.psc_addresses
   external_addresses           = var.net_address.external_addresses
+  global_addresses             = var.net_address.global_addresses
+  internal_addresses           = var.net_address.internal_addresses
 }
 ```
