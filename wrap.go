@@ -74,34 +74,40 @@ func LoadModule(modulePath string, moduleVar string, ignoreVars []string, addDef
 	for _, v := range module.Variables {
 		if !slices.Contains(ignoreVars, v.Name) {
 			varType := v.Type
-			if v.Required {
-				varType = fmt.Sprintf("optional(%s)", varType)
+			if !v.Required {
+				if v.Default == nil {
+					varType = fmt.Sprintf("optional(%s)", varType)
+				} else {
+					if addDefaultValues {
+						varType = fmt.Sprintf("optional(%s, %s)", varType, printTfValue(v.Default))
+					}
+				}
 			}
+
 			if v.Sensitive {
 				varType = fmt.Sprintf("sensitive(%s)", varType)
 			}
 			if v.Description != "" {
 				output += fmt.Sprintf("    # %s\n", v.Description)
 			}
-			output += fmt.Sprintf("    %s = %s", v.Name, v.Type)
+			output += fmt.Sprintf("    %s = %s", v.Name, varType)
 			output += fmt.Sprintf("\n")
 		}
 	}
 	output += fmt.Sprintf("  })\n")
 
 	// Add default values
-	if addDefaultValues {
-		output += "  default = {\n"
-		for _, v := range module.Variables {
-			if !slices.Contains(ignoreVars, v.Name) {
-				if v.Default != nil {
-					output += fmt.Sprintf("    %s = %s\n", v.Name, printTfValue(v.Default))
-
-				}
-			}
-		}
-		output += "  }\n"
-	}
+	// if addDefaultValues {
+	//	output += "  default = {\n"
+	//	for _, v := range module.Variables {
+	//		if !slices.Contains(ignoreVars, v.Name) {
+	//			if v.Default != nil {
+	//				output += fmt.Sprintf("    %s = %s\n", v.Name, printTfValue(v.Default))
+	//			}
+	//		}
+	//	}
+	//	output += "  }\n"
+	//}
 
 	if module.Diagnostics.HasErrors() {
 		return diagnosticsToError(&module.Diagnostics)
